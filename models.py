@@ -14,25 +14,22 @@ class VAE(nn.Module):
         self.hidden_dim = hidden_dim
         self.latent_dim = latent_dim
 
-        self.encoder = nn.Sequential(
-            nn.Linear(input_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU()
-        )
 
-        # latent space
-        self.mu = nn.Linear(hidden_dim, latent_dim)
-        self.sigma = nn.Linear(hidden_dim, latent_dim)
+        self.encoder = None
+        self.mu = None
+        self.sigma = None
+        self.decoder = None
 
-        self.decoder = nn.Sequential(
-            nn.Linear(latent_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, input_dim),
-            nn.Sigmoid()
-        )
+    def check_architecture(self):
+        if self.encoder is None:
+            raise NotImplementedError("Encoder not implemented")
+        if self.mu is None:
+            raise NotImplementedError("Mu not implemented")
+        if self.sigma is None:
+            raise NotImplementedError("Sigma not implemented")
+        if self.decoder is None:
+            raise NotImplementedError("Decoder not implemented")
+
     
     def encode(self, x):
         # q(z|x)
@@ -85,12 +82,26 @@ class VAE_CNN(VAE):
         self.mu = nn.Linear(hidden_dim, latent_dim)
         self.sigma = nn.Linear(hidden_dim, latent_dim)
 
+        # self.decoder = nn.Sequential(
+        #     nn.Linear(latent_dim, hidden_dim),
+        #     nn.ReLU(),
+        #     nn.Linear(hidden_dim, hidden_dim),
+        #     nn.ReLU(),
+        #     nn.Linear(hidden_dim, input_dim),
+        #     nn.Sigmoid()
+        # )
+        # make a decoder that returns a 28x28 image
         self.decoder = nn.Sequential(
             nn.Linear(latent_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
+            nn.Linear(hidden_dim, 128*7*7),
             nn.ReLU(),
-            nn.Linear(hidden_dim, input_dim),
+            nn.Unflatten(1, (128, 7, 7)),
+            nn.ConvTranspose2d(128, 64, kernel_size=3, stride=1, padding=1), # 7x7 -> 7x7
+            nn.ReLU(),
+            nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=1, output_padding=1), # 7x7 -> 14x14
+            nn.ReLU(),
+            nn.ConvTranspose2d(32, 1, kernel_size=3, stride=2, padding=1, output_padding=1), # 14x14 -> 28x28
             nn.Sigmoid()
         )
 
