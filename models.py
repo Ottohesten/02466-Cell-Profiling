@@ -3,7 +3,7 @@ from torch import nn
 
 
 # base vae model architecture
-# input img -> hidden -> mu, logvar -> reparameterization trick (sample point from distribution made from mu, logvar) -> decoder -> output img
+# input img -> hidden -> mu, sigma -> reparameterization trick (sample point from distribution made from mu, sigma) -> decoder -> output img
 class VAE(nn.Module):
     """
     Variational Autoencoder
@@ -58,10 +58,10 @@ class VAE(nn.Module):
 
 
 
-# input img -> hidden -> mu, logvar -> reparameterization trick (sample point from distribution made from mu, logvar) -> decoder -> output img
-class VAE_CNN(VAE):
+# input img -> hidden -> mu, sigma -> reparameterization trick (sample point from distribution made from mu, sigma) -> decoder -> output img
+class VAE_MNIST_CNN(VAE):
     """
-    Variational Autoencoder with CNN
+    Variational Autoencoder for MNIST dataset with CNN architecture
     """
     def __init__(self, input_dim, hidden_dim, latent_dim):
         super().__init__(input_dim, hidden_dim, latent_dim)
@@ -106,7 +106,10 @@ class VAE_CNN(VAE):
         )
 
 
-class VAE_linear(VAE):
+class VAE_MNIST_linear(VAE):
+    """
+    Variational Autoencoder for the MNIST dataset with linear layers
+    """
     def __init__(self, input_dim, hidden_dim, latent_dim):
         super().__init__(input_dim, hidden_dim, latent_dim)
         self.encoder = nn.Sequential(
@@ -115,6 +118,35 @@ class VAE_linear(VAE):
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU()
         )
+        # latent space
+        self.mu = nn.Linear(hidden_dim, latent_dim)
+        self.sigma = nn.Linear(hidden_dim, latent_dim)
+
+        self.decoder = nn.Sequential(
+            nn.Linear(latent_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, input_dim),
+            nn.Sigmoid()
+        )
+
+
+# input (68 x 68 img)
+class VAE_CELL_linear(VAE):
+    """
+    Variational Autoencoder for the CELL dataset with linear layers
+    """
+    def __init__(self, input_dim, hidden_dim, latent_dim):
+        super().__init__(input_dim, hidden_dim, latent_dim)
+
+        self.encoder = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU()
+        )
+
         # latent space
         self.mu = nn.Linear(hidden_dim, latent_dim)
         self.sigma = nn.Linear(hidden_dim, latent_dim)
