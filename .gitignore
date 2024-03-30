@@ -163,3 +163,5 @@ cython_debug/
 # add data folder
 data/
 processed_data/
+
+CPfeatures.csv
