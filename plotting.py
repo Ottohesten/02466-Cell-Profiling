@@ -49,8 +49,11 @@ def plot_image_comparison(model, test_loader, cuda, img_shape=(28, 28)):
         if cuda:
             images = images.cuda()
         output = model(images)
-        x_hat, mu, sigma = output
-
+        if isinstance(output, tuple):
+            x_hat = output[0]
+        else:
+            x_hat = output
+            
     fig, ax = plt.subplots(nrows=2, ncols=10, sharex=True, sharey=True, figsize=(25,5))
     for i in range(10):
         ax[0, i].imshow(images[i].cpu().detach().view(img_shape), cmap='gray')
