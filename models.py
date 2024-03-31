@@ -2,6 +2,45 @@ import torch
 from torch import nn
 
 
+# Autoencoder model architecture
+class AutoEncoder(nn.Module):
+    def __init__(self, latent_features=3):
+        super(AutoEncoder, self).__init__()
+
+        self.encoder = nn.Sequential(
+            nn.Linear(28*28, 256),
+            nn.LeakyReLU(), # LeakyReLU prevents dead neurons by allowing a small gradient when the input is less than zero.
+            nn.Dropout(0.1), # Prevent overfitting by turn off random neurons. Here we have chosen a relatively low percentage of 10%.
+            nn.Linear(256, 128),
+            nn.LeakyReLU(),
+            nn.Linear(128, 64),
+            nn.LeakyReLU(),
+            nn.Linear(64, 12),
+            nn.LeakyReLU(),
+            nn.Linear(12, latent_features)
+        )
+
+        self.decoder = nn.Sequential(
+            nn.Linear(latent_features, 12),
+            nn.LeakyReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(12, 64),
+            nn.LeakyReLU(),
+            nn.Linear(64, 128),
+            nn.LeakyReLU(),
+            nn.Linear(128, 256),
+            nn.LeakyReLU(),
+            nn.Linear(256, 28*28),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        x = self.encoder(x)
+        x = self.decoder(x)
+        return x
+
+
+
 # base vae model architecture
 # input img -> hidden -> mu, sigma -> reparameterization trick (sample point from distribution made from mu, sigma) -> decoder -> output img
 class VAE(nn.Module):
