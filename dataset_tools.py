@@ -36,9 +36,18 @@ def npy_loader(path):
 
 
 class OwnDataset(Dataset):
-    def __init__(self, transform=None):
-        self.dataset = datasets.DatasetFolder("data_subset/singh_cp_pipeline_singlecell_images", loader=npy_loader, extensions=('.npy',))
+    def __init__(self, transform=None, train=True):
         self.transform = transform
+
+        if transform is not None:
+            self.dataset = datasets.DatasetFolder("data_subset/singh_cp_pipeline_singlecell_images", loader=npy_loader, extensions=('.npy',), transform=transform)
+        else:
+            self.dataset = datasets.DatasetFolder("data_subset/singh_cp_pipeline_singlecell_images", loader=npy_loader, extensions=('.npy',))
+    
+        if train:
+            self.dataset.samples = self.dataset.samples[:int(0.8*len(self.dataset))]
+        else:
+            self.dataset.samples = self.dataset.samples[int(0.8*len(self.dataset)):]
 
     def __len__(self):
         return len(self.dataset)
