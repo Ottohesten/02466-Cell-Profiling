@@ -59,5 +59,5 @@ class OwnDataset(Dataset):
         return len(self.dataset)
     
     def __getitem__(self, idx):
-        img, label = self.dataset[idx]
+        img, label = self.dataset[idx] # TODO: label seems to be coming out of thin air. the correct label is in metadata file
         return img, label
