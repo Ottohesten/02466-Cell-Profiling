@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import torch
 
 
-def imshow(img):
+def show_img(img):
     plt.imshow(img.permute(1, 2, 0))
     plt.show()
 
@@ -36,10 +36,16 @@ def plot_random_images(model, n=10, cuda=False, img_shape=(28, 28)):
             z = z.cuda()
         images = model.decoder(z)
 
-    fig, ax = plt.subplots(1, n, figsize=(25, 5))
-    for i in range(n):
-        ax[i].imshow(images[i].cpu().detach().view(img_shape), cmap='gray')
-        ax[i].axis('off')
+    if len(img_shape) > 2:
+        fig, ax = plt.subplots(1, n, figsize=(25, 5))
+        for i in range(n):
+            ax[i].imshow(images[i].cpu().detach().view(img_shape).permute(1, 2, 0), cmap='gray')
+            ax[i].axis('off')
+    else:
+        fig, ax = plt.subplots(1, n, figsize=(25, 5))
+        for i in range(n):
+            ax[i].imshow(images[i].cpu().detach().view(img_shape), cmap='gray')
+            ax[i].axis('off')
 
     plt.show()
 
@@ -58,13 +64,21 @@ def plot_image_comparison(model, test_loader, cuda, img_shape=(28, 28)):
             x_hat = output[0]
         else:
             x_hat = output
-            
-    fig, ax = plt.subplots(nrows=2, ncols=10, sharex=True, sharey=True, figsize=(25,5))
-    for i in range(10):
-        ax[0, i].imshow(images[i].cpu().detach().view(img_shape), cmap='gray')
-        ax[1, i].imshow(x_hat[i].cpu().detach().view(img_shape), cmap='gray')
-        ax[0, i].axis('off')
-        ax[1, i].axis('off')
+
+    if len(img_shape) > 2:
+        fig, ax = plt.subplots(nrows=2, ncols=10, sharex=True, sharey=True, figsize=(25,5))
+        for i in range(10):
+            ax[0, i].imshow(images[i].cpu().detach().view(img_shape).permute(1, 2, 0), cmap='gray')
+            ax[1, i].imshow(x_hat[i].cpu().detach().view(img_shape).permute(1, 2, 0), cmap='gray')
+            ax[0, i].axis('off')
+            ax[1, i].axis('off')
+    else:
+        fig, ax = plt.subplots(nrows=2, ncols=10, sharex=True, sharey=True, figsize=(25,5))
+        for i in range(10):
+            ax[0, i].imshow(images[i].cpu().detach().view(img_shape), cmap='gray')
+            ax[1, i].imshow(x_hat[i].cpu().detach().view(img_shape), cmap='gray')
+            ax[0, i].axis('off')
+            ax[1, i].axis('off')
 
 
 
