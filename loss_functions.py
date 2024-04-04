@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as F
 
 def loss_function(x, x_hat, mu, sigma, beta=1.0):
     # BCE = F.binary_cross_entropy(x_hat, x, reduction='sum')

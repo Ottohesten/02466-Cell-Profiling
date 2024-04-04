@@ -2,6 +2,11 @@ import matplotlib.pyplot as plt
 import torch
 
 
+def imshow(img):
+    plt.imshow(img.permute(1, 2, 0))
+    plt.show()
+
+
 def loss_plots(plot_data: dict, invidual_plots: bool = False):
     """
     Plots the losses from the dictionary

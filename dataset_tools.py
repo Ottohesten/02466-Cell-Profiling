@@ -28,10 +28,16 @@ def npy_loader(path):
     """
     load a npy file and change the dtype to int8
     """
-    sample = torch.from_numpy(np.load(path).astype(np.uint8))
+    sample = np.load(path)
+
+    sample = (sample / np.max(sample) * 255).astype(np.uint8)
+
+    sample = torch.from_numpy(sample)
     # make channel the first dimension
     sample = sample.permute(2, 0, 1)
+
     return sample
+
 
 
 
