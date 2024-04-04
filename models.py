@@ -200,5 +200,53 @@ class VAE_CELL_linear(VAE):
         )
 
 
+class VAE_CELL_CNN(VAE):
+    """
+    Variational Autoencoder for the CELL dataset with CNN architecture
+
+    takes in 3x68x68 images
+
+    Returns 3x68x68 images
+    """
+    def __init__(self, input_dim, hidden_dim, latent_dim):
+        super().__init__(input_dim, hidden_dim, latent_dim)
+
+        # encoder
+
+        self.encoder = nn.Sequential(
+            nn.Conv2d(3, 32, kernel_size=3, stride=2, padding=1), # 68x68 -> 34x34
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1), # 34x34 -> 17x17
+            nn.ReLU(),
+            nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1), # 17x17 -> 9x9
+            nn.ReLU(),
+            nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1), # 9x9 -> 9x9
+            nn.ReLU(),
+            nn.Flatten(),
+            nn.Linear(256*9*9, hidden_dim),
+            nn.ReLU()
+        )
+
+        # latent space
+        self.mu = nn.Linear(hidden_dim, latent_dim)
+        self.sigma = nn.Linear(hidden_dim, latent_dim)
+
+        # decoder
+        self.decoder = nn.Sequential(
+            nn.Linear(latent_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, 256*9*9),
+            nn.ReLU(),
+            nn.Unflatten(1, (256, 9, 9)),
+            nn.ConvTranspose2d(256, 128, kernel_size=3, stride=1, padding=1), # 9x9 -> 9x9
+            nn.ReLU(),
+            nn.ConvTranspose2d(128, 64, kernel_size=3, stride=2, padding=1), # 9x9 -> 17x17
+            nn.ReLU(),
+            nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=1, output_padding=1), # 17x17 -> 34x34
+            nn.ReLU(),
+            nn.ConvTranspose2d(32, 3, kernel_size=3, stride=2, padding=1, output_padding=1), # 34x34 -> 68x68
+            # nn.Sigmoid()
+        )
+
 
 
