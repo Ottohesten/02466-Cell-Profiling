@@ -224,7 +224,7 @@ class VAE_CELL_CNN(VAE):
             nn.LeakyReLU(),
             nn.Flatten(),
             nn.Linear(256*9*9, hidden_dim),
-            nn.LeakyReLU()
+            nn.Sigmoid()
         )
 
         # latent space
@@ -245,7 +245,7 @@ class VAE_CELL_CNN(VAE):
             nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=1, output_padding=1), # 17x17 -> 34x34
             nn.LeakyReLU(),
             nn.ConvTranspose2d(32, 3, kernel_size=3, stride=2, padding=1, output_padding=1), # 34x34 -> 68x68
-            # nn.Sigmoid()
+            nn.Sigmoid()
         )
 
 
