@@ -251,23 +251,24 @@ class VAE_CELL_CNN(VAE):
         )
 
 
+import torch.nn.functional as F # for the activation functions
 class VAE_CELL_CNN_CLASSIFIER(nn.Module):
     def __init__(self, input_dim, hidden_dim, latent_dim, num_classes):
         super(VAE_CELL_CNN_CLASSIFIER, self).__init__()
         
         # Encoder part
         self.encoder = nn.Sequential(
-            nn.Conv2d(3, 32, kernel_size=3, stride=2, padding=1),
+            nn.Conv2d(3, 32, kernel_size=3, stride=2, padding=1), # 68x68 -> 34x34
+            nn.LeakyReLU(), # LeakyReLU prevents dead neurons by allowing a small gradient when the input is less than zero.
+            nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1), # 34x34 -> 17x17
             nn.LeakyReLU(),
-            nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1),
+            nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1), # 17x17 -> 9x9
             nn.LeakyReLU(),
-            nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1),
-            nn.LeakyReLU(),
-            nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1), # 9x9 -> 9x9
             nn.LeakyReLU(),
             nn.Flatten(),
             nn.Linear(256*9*9, hidden_dim),
-            nn.LeakyReLU(),
+            nn.Sigmoid()
         )
         
         # Latent space
@@ -281,14 +282,14 @@ class VAE_CELL_CNN_CLASSIFIER(nn.Module):
             nn.Linear(hidden_dim, 256*9*9),
             nn.LeakyReLU(),
             nn.Unflatten(1, (256, 9, 9)),
-            nn.ConvTranspose2d(256, 128, kernel_size=3, stride=1, padding=1),
+            nn.ConvTranspose2d(256, 128, kernel_size=3, stride=1, padding=1), # 9x9 -> 9x9
             nn.LeakyReLU(),
-            nn.ConvTranspose2d(128, 64, kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.ConvTranspose2d(128, 64, kernel_size=3, stride=2, padding=1), # 9x9 -> 17x17
             nn.LeakyReLU(),
-            nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=1, output_padding=1), # 17x17 -> 34x34
             nn.LeakyReLU(),
-            nn.ConvTranspose2d(32, 3, kernel_size=3, stride=2, padding=1, output_padding=1),
-            nn.Sigmoid(),
+            nn.ConvTranspose2d(32, 3, kernel_size=3, stride=2, padding=1, output_padding=1), # 34x34 -> 68x68
+            nn.Sigmoid()
         )
 
         # Classification head
