@@ -41,6 +41,8 @@ class AutoEncoder(nn.Module):
 
 
 
+
+
 # base vae model architecture
 # input img -> hidden -> mu, sigma -> reparameterization trick (sample point from distribution made from mu, sigma) -> decoder -> output img
 class VAE(nn.Module):
@@ -249,4 +251,64 @@ class VAE_CELL_CNN(VAE):
         )
 
 
+class VAE_CELL_CNN_CLASSIFIER(nn.Module):
+    def __init__(self, input_dim, hidden_dim, latent_dim, num_classes):
+        super(VAE_CELL_CNN_CLASSIFIER, self).__init__()
+        
+        # Encoder part
+        self.encoder = nn.Sequential(
+            nn.Conv2d(3, 32, kernel_size=3, stride=2, padding=1),
+            nn.LeakyReLU(),
+            nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1),
+            nn.LeakyReLU(),
+            nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1),
+            nn.LeakyReLU(),
+            nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1),
+            nn.LeakyReLU(),
+            nn.Flatten(),
+            nn.Linear(256*9*9, hidden_dim),
+            nn.LeakyReLU(),
+        )
+        
+        # Latent space
+        self.mu = nn.Linear(hidden_dim, latent_dim)
+        self.log_var = nn.Linear(hidden_dim, latent_dim)
+        
+        # Decoder part
+        self.decoder = nn.Sequential(
+            nn.Linear(latent_dim, hidden_dim),
+            nn.LeakyReLU(),
+            nn.Linear(hidden_dim, 256*9*9),
+            nn.LeakyReLU(),
+            nn.Unflatten(1, (256, 9, 9)),
+            nn.ConvTranspose2d(256, 128, kernel_size=3, stride=1, padding=1),
+            nn.LeakyReLU(),
+            nn.ConvTranspose2d(128, 64, kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.LeakyReLU(),
+            nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.LeakyReLU(),
+            nn.ConvTranspose2d(32, 3, kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.Sigmoid(),
+        )
 
+        # Classification head
+        self.classifier = nn.Linear(hidden_dim, num_classes)
+
+    def reparameterize(self, mu, log_var):
+        std = torch.exp(0.5*log_var)
+        eps = torch.randn_like(std)
+        return mu + eps*std
+
+    def forward(self, x):
+        encoded = self.encoder(x)
+        mu = self.mu(encoded)
+        log_var = self.log_var(encoded)
+        z = self.reparameterize(mu, log_var)
+        x_hat = self.decoder(z)
+        class_logits = self.classifier(encoded)
+        return x_hat, mu, log_var, class_logits
+
+    def forward_classifier(self, x):
+        encoded = self.encoder(x)
+        class_logits = self.classifier(encoded)
+        return class_logits
