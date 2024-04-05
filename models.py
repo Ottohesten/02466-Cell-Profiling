@@ -181,9 +181,9 @@ class VAE_CELL_linear(VAE):
 
         self.encoder = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),
-            nn.ReLU(),
+            nn.LeakyReLU(), # LeakyReLU prevents dead neurons by allowing a small gradient when the input is less than zero.
             nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU()
+            nn.LeakyReLU()
         )
 
         # latent space
@@ -192,9 +192,9 @@ class VAE_CELL_linear(VAE):
 
         self.decoder = nn.Sequential(
             nn.Linear(latent_dim, hidden_dim),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(hidden_dim, input_dim),
             nn.Sigmoid()
         )
@@ -215,16 +215,16 @@ class VAE_CELL_CNN(VAE):
 
         self.encoder = nn.Sequential(
             nn.Conv2d(3, 32, kernel_size=3, stride=2, padding=1), # 68x68 -> 34x34
-            nn.ReLU(),
+            nn.LeakyReLU(), # LeakyReLU prevents dead neurons by allowing a small gradient when the input is less than zero.
             nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1), # 34x34 -> 17x17
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1), # 17x17 -> 9x9
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1), # 9x9 -> 9x9
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Flatten(),
             nn.Linear(256*9*9, hidden_dim),
-            nn.ReLU()
+            nn.LeakyReLU()
         )
 
         # latent space
@@ -234,16 +234,16 @@ class VAE_CELL_CNN(VAE):
         # decoder
         self.decoder = nn.Sequential(
             nn.Linear(latent_dim, hidden_dim),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(hidden_dim, 256*9*9),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Unflatten(1, (256, 9, 9)),
             nn.ConvTranspose2d(256, 128, kernel_size=3, stride=1, padding=1), # 9x9 -> 9x9
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.ConvTranspose2d(128, 64, kernel_size=3, stride=2, padding=1), # 9x9 -> 17x17
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=1, output_padding=1), # 17x17 -> 34x34
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.ConvTranspose2d(32, 3, kernel_size=3, stride=2, padding=1, output_padding=1), # 34x34 -> 68x68
             # nn.Sigmoid()
         )
