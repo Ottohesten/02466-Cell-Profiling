@@ -72,7 +72,7 @@ class VAE(nn.Module):
             raise NotImplementedError("Decoder not implemented")
 
     
-    def encode(self, x):
+    def encode(self, x): # posterior
         # q(z|x)
         h = self.encoder(x) # hidden
         mu = self.mu(h) # mean
@@ -94,8 +94,7 @@ class VAE(nn.Module):
         mu, sigma = self.encode(x) 
         z = self.reparameterize(mu, sigma) # sample z from q(z|x) = mu + std * eps
         x_hat = self.decoder(z) # reconstruct x from z p(x|z)
-        return x_hat, mu, sigma
-
+        return {'x_hat': x_hat, 'mu': mu, 'sigma': sigma, 'z': z}
 
 
 
@@ -250,6 +249,35 @@ class VAE_CELL_CNN(VAE):
             nn.Sigmoid()
         )
 
+class CELL_CNN_CLASSIFIER(nn.Module):
+    """
+    Basic CNN classifier for the CELL dataset that just takes a 3x68x68 image and classifies it into one of the 13 classes
+    """
+    def __init__(self, input_dim, hidden_dim, num_classes):
+        super().__init__()
+
+
+        self.net = nn.Sequential(
+            nn.Conv2d(3, 32, kernel_size=3, stride=2, padding=1), # 68x68 -> 34x34
+            nn.LeakyReLU(), # LeakyReLU prevents dead neurons by allowing a small gradient when the input is less than zero.
+            nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1), # 34x34 -> 17x17
+            nn.LeakyReLU(),
+            nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1), # 17x17 -> 9x9
+            nn.LeakyReLU(),
+            nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1), # 9x9 -> 9x9
+            nn.LeakyReLU(),
+            nn.Flatten(),
+            nn.Linear(256*9*9, hidden_dim),
+            nn.LeakyReLU(),
+            nn.Linear(hidden_dim, num_classes)
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
+        
+
+
 
 import torch.nn.functional as F # for the activation functions
 class VAE_CELL_CNN_CLASSIFIER(nn.Module):
@@ -313,3 +341,6 @@ class VAE_CELL_CNN_CLASSIFIER(nn.Module):
         encoded = self.encoder(x)
         class_logits = self.classifier(encoded)
         return class_logits
+
+
+

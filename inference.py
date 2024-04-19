@@ -24,7 +24,8 @@ class Inference:
             for batch_x, batch_y in self.test_loader:
                 # if cuda:
                 #     batch_x = batch_x.cuda()
-                x_hat, mu, sigma = self.model(batch_x)
+                output = self.model(batch_x)
+                x_hat = output["x_hat"]
                 for x, y in zip(x_hat, batch_y):
                     if len(samples[str(y.item())]) < num_samples:
                         # add the generated image to the list
