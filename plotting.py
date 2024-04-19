@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from sklearn.manifold import TSNE
 import torch
 
 
@@ -60,10 +61,7 @@ def plot_image_comparison(model, test_loader, cuda, img_shape=(28, 28)):
         if cuda:
             images = images.cuda()
         output = model(images)
-        if isinstance(output, tuple):
-            x_hat = output[0]
-        else:
-            x_hat = output
+        x_hat = output["x_hat"]
 
     if len(img_shape) > 2:
         fig, ax = plt.subplots(nrows=2, ncols=10, sharex=True, sharey=True, figsize=(25,5))
@@ -82,3 +80,17 @@ def plot_image_comparison(model, test_loader, cuda, img_shape=(28, 28)):
 
 
 
+def plot_latent(output):
+    mu = output["mu"].detach().cpu().numpy()
+    sigma = output["sigma"].detach().cpu().numpy()
+    z = output["z"].detach().cpu().numpy()
+
+    # if z.shape[1] > 2:
+    #     z = TSNE(n_components=2).fit_transform(z)
+    
+    plt.figure(figsize=(8, 6))
+    plt.scatter(z[:, 0], z[:, 1], c="g", label="z")
+    plt.scatter(mu[:, 0], mu[:, 1], c="r", label="mu")
+    plt.scatter(sigma[:, 0], sigma[:, 1], c="b", label="sigma")
+    plt.legend()
+    plt.show()
