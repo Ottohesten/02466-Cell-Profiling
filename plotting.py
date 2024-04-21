@@ -85,12 +85,24 @@ def plot_latent(output):
     sigma = output["sigma"].detach().cpu().numpy()
     z = output["z"].detach().cpu().numpy()
 
+    scale_factor = 2.0
+
     # if z.shape[1] > 2:
     #     z = TSNE(n_components=2).fit_transform(z)
     
     plt.figure(figsize=(8, 6))
     plt.scatter(z[:, 0], z[:, 1], c="g", label="z")
     plt.scatter(mu[:, 0], mu[:, 1], c="r", label="mu")
-    plt.scatter(sigma[:, 0], sigma[:, 1], c="b", label="sigma")
+
+
+
+    # plot of std deviations of the latent variables
+    ellipses = [plt.matplotlib.patches.Ellipse((mu[i, 0], mu[i, 1]), sigma[i, 0] * scale_factor, sigma[i, 1] * scale_factor, alpha=0.3, fill=False) for i in range(z.shape[0])]
+
+    for e in ellipses:
+        plt.gca().add_artist(e)
+
+
     plt.legend()
     plt.show()
+
