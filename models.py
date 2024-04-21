@@ -58,7 +58,7 @@ class VAE(nn.Module):
 
         self.encoder = None
         self.mu = None
-        self.sigma = None
+        self.logvar = None
         self.decoder = None
 
     def check_architecture(self):
@@ -66,8 +66,8 @@ class VAE(nn.Module):
             raise NotImplementedError("Encoder not implemented")
         if self.mu is None:
             raise NotImplementedError("Mu not implemented")
-        if self.sigma is None:
-            raise NotImplementedError("Sigma not implemented")
+        if self.logvar is None:
+            raise NotImplementedError("logvar not implemented")
         if self.decoder is None:
             raise NotImplementedError("Decoder not implemented")
 
@@ -76,25 +76,26 @@ class VAE(nn.Module):
         # q(z|x)
         h = self.encoder(x) # hidden
         mu = self.mu(h) # mean
-        sigma = self.sigma(h) # log variance
-        return mu, sigma # mean and log variance
+        logvar = self.logvar(h) # log variance
+        return mu, logvar # mean and log variance
     
     def decode(self, z):
         # p(x|z)
         return self.decoder(z)
 
-    def reparameterize(self, mu, sigma):
+    def reparameterize(self, mu, logvar):
         if self.training:
-            eps = torch.randn_like(sigma)
-            return mu + eps * sigma
+            std = torch.exp(0.5*logvar)
+            eps = torch.randn_like(std)
+            return mu + eps*std
         else:
             return mu
 
     def forward(self, x):
-        mu, sigma = self.encode(x) 
-        z = self.reparameterize(mu, sigma) # sample z from q(z|x) = mu + std * eps
+        mu, logvar = self.encode(x) 
+        z = self.reparameterize(mu, logvar) # sample z from q(z|x) = mu + std * eps
         x_hat = self.decoder(z) # reconstruct x from z p(x|z)
-        return {'x_hat': x_hat, 'mu': mu, 'sigma': sigma, 'z': z}
+        return {'x_hat': x_hat, 'mu': mu, 'sigma': torch.exp(0.5*logvar), 'z': z}
 
 
 
@@ -120,7 +121,7 @@ class VAE_MNIST_CNN(VAE):
         )
         # latent space
         self.mu = nn.Linear(hidden_dim, latent_dim)
-        self.sigma = nn.Linear(hidden_dim, latent_dim)
+        self.logvar = nn.Linear(hidden_dim, latent_dim)
 
         # self.decoder = nn.Sequential(
         #     nn.Linear(latent_dim, hidden_dim),
@@ -160,7 +161,7 @@ class VAE_MNIST_linear(VAE):
         )
         # latent space
         self.mu = nn.Linear(hidden_dim, latent_dim)
-        self.sigma = nn.Linear(hidden_dim, latent_dim)
+        self.logvar = nn.Linear(hidden_dim, latent_dim)
 
         self.decoder = nn.Sequential(
             nn.Linear(latent_dim, hidden_dim),
@@ -189,7 +190,7 @@ class VAE_CELL_linear(VAE):
 
         # latent space
         self.mu = nn.Linear(hidden_dim, latent_dim)
-        self.sigma = nn.Linear(hidden_dim, latent_dim)
+        self.logvar = nn.Linear(hidden_dim, latent_dim)
 
         self.decoder = nn.Sequential(
             nn.Linear(latent_dim, hidden_dim),
@@ -230,7 +231,7 @@ class VAE_CELL_CNN(VAE):
 
         # latent space
         self.mu = nn.Linear(hidden_dim, latent_dim)
-        self.sigma = nn.Linear(hidden_dim, latent_dim)
+        self.logvar = nn.Linear(hidden_dim, latent_dim)
 
         # decoder
         self.decoder = nn.Sequential(
