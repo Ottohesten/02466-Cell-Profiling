@@ -42,13 +42,13 @@ def npy_loader(path):
 
 
 class OwnDataset(Dataset):
-    def __init__(self, transform=None, train=True):
+    def __init__(self, transform=None, train=True, path="data_subset/singh_cp_pipeline_singlecell_images"):
         self.transform = transform
 
         if transform is not None:
-            self.dataset = datasets.DatasetFolder("data_subset/singh_cp_pipeline_singlecell_images", loader=npy_loader, extensions=('.npy',), transform=transform)
+            self.dataset = datasets.DatasetFolder(path, loader=npy_loader, extensions=('.npy',), transform=transform)
         else:
-            self.dataset = datasets.DatasetFolder("data_subset/singh_cp_pipeline_singlecell_images", loader=npy_loader, extensions=('.npy',))
+            self.dataset = datasets.DatasetFolder(path, loader=npy_loader, extensions=('.npy',))
     
         if train:
             self.dataset.samples = self.dataset.samples[:int(0.8*len(self.dataset))]
@@ -59,5 +59,13 @@ class OwnDataset(Dataset):
         return len(self.dataset)
     
     def __getitem__(self, idx):
-        img, label = self.dataset[idx] # TODO: label seems to be coming out of thin air. the correct label is in metadata file
+        img, label = self.dataset[idx] # TODO: label seems to be coming out of thin air. the correct label is in metadata file | label comes from datasetFolder find_classes method, i think this is the wrong way to get the dataset
         return img, label
+    
+
+
+if __name__ == "__main__":
+    print("ran dataset_tools.py as main file")
+
+    owndataset = OwnDataset()
+    print(len(owndataset))
