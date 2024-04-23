@@ -42,7 +42,7 @@ def npy_loader(path):
 
 
 class OwnDataset(Dataset):
-    def __init__(self, transform=None, train=True, path="data_subset/singh_cp_pipeline_singlecell_images"):
+    def __init__(self, transform=None, train=True, path="data_subset"):
         self.transform = transform
 
         if transform is not None:
@@ -67,5 +67,16 @@ class OwnDataset(Dataset):
 if __name__ == "__main__":
     print("ran dataset_tools.py as main file")
 
-    owndataset = OwnDataset()
-    print(len(owndataset))
+    data_train = OwnDataset(path="data_folder")
+    print(len(data_train))
+
+    train_loader = DataLoader(data_train, batch_size=64, shuffle=True)
+
+    x, y = next(iter(train_loader))
+
+
+    
+
+
+
+
