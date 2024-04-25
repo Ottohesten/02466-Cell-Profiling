@@ -116,21 +116,13 @@ class VAE_MNIST_CNN(VAE):
             nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1), # 7x7 -> 7x7
             nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(128*7*7, hidden_dim),
+            nn.Linear(128*7*7, 2*latent_dim),
             nn.ReLU()
         )
         # latent space
-        self.mu = nn.Linear(hidden_dim, latent_dim)
-        self.logvar = nn.Linear(hidden_dim, latent_dim)
+        self.mu = nn.Linear(latent_dim*2, latent_dim)
+        self.logvar = nn.Linear(latent_dim*2, latent_dim)
 
-        # self.decoder = nn.Sequential(
-        #     nn.Linear(latent_dim, hidden_dim),
-        #     nn.ReLU(),
-        #     nn.Linear(hidden_dim, hidden_dim),
-        #     nn.ReLU(),
-        #     nn.Linear(hidden_dim, input_dim),
-        #     nn.Sigmoid()
-        # )
         # make a decoder that returns a 28x28 image
         self.decoder = nn.Sequential(
             nn.Linear(latent_dim, hidden_dim),
@@ -156,12 +148,12 @@ class VAE_MNIST_linear(VAE):
         self.encoder = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
+            nn.Linear(hidden_dim, 2*latent_dim),
             nn.ReLU()
         )
         # latent space
-        self.mu = nn.Linear(hidden_dim, latent_dim)
-        self.logvar = nn.Linear(hidden_dim, latent_dim)
+        self.mu = nn.Linear(latent_dim*2, latent_dim)
+        self.logvar = nn.Linear(latent_dim*2, latent_dim)
 
         self.decoder = nn.Sequential(
             nn.Linear(latent_dim, hidden_dim),
@@ -184,13 +176,13 @@ class VAE_CELL_linear(VAE):
         self.encoder = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),
             nn.LeakyReLU(), # LeakyReLU prevents dead neurons by allowing a small gradient when the input is less than zero.
-            nn.Linear(hidden_dim, hidden_dim),
+            nn.Linear(hidden_dim, 2*latent_dim),
             nn.LeakyReLU()
         )
 
         # latent space
-        self.mu = nn.Linear(hidden_dim, latent_dim)
-        self.logvar = nn.Linear(hidden_dim, latent_dim)
+        self.mu = nn.Linear(latent_dim*2, latent_dim)
+        self.logvar = nn.Linear(latent_dim*2, latent_dim)
 
         self.decoder = nn.Sequential(
             nn.Linear(latent_dim, hidden_dim),
@@ -214,7 +206,6 @@ class VAE_CELL_CNN(VAE):
         super().__init__(input_dim, hidden_dim, latent_dim)
 
         # encoder
-
         self.encoder = nn.Sequential(
             nn.Conv2d(3, 32, kernel_size=3, stride=2, padding=1), # 68x68 -> 34x34
             nn.LeakyReLU(), # LeakyReLU prevents dead neurons by allowing a small gradient when the input is less than zero.
@@ -225,13 +216,12 @@ class VAE_CELL_CNN(VAE):
             nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1), # 9x9 -> 9x9
             nn.LeakyReLU(),
             nn.Flatten(),
-            nn.Linear(256*9*9, hidden_dim),
-            nn.Sigmoid()
+            nn.Linear(256*9*9, 2*latent_dim),
         )
 
         # latent space
-        self.mu = nn.Linear(hidden_dim, latent_dim)
-        self.logvar = nn.Linear(hidden_dim, latent_dim)
+        self.mu = nn.Linear(latent_dim*2, latent_dim)
+        self.logvar = nn.Linear(latent_dim*2, latent_dim)
 
         # decoder
         self.decoder = nn.Sequential(
@@ -276,7 +266,70 @@ class CELL_CNN_CLASSIFIER(nn.Module):
     def forward(self, x):
         return self.net(x)
 
+class VAE_LAFARGE(VAE):
+    def __init__(self,input_dim, hidden_dim, latent_dim=256):
+        super().__init__()
         
+        # encoder with max pooling and batch normalization
+        self.encoder = nn.Sequential(
+            # block 1
+            nn.Conv2d(3, 32, kernel_size=5), # 68x68x3 -> 64x64x32
+            nn.LeakyReLU(),
+            nn.MaxPool2d(2), # 64x64x32 -> 32x32x32
+            nn.BatchNorm2d(32),
+
+            # block 2
+            nn.Conv2d(32, 64, kernel_size=5), # 32x32x32 -> 28x28x64
+            nn.LeakyReLU(),
+            nn.MaxPool2d(2), # 28x28x64 -> 14x14x64
+            nn.BatchNorm2d(64),
+
+            # block 3
+            nn.Conv2d(64, 128, kernel_size=5), # 14x14x64 -> 10x10x128
+            nn.LeakyReLU(),
+            nn.MaxPool2d(2), # 10x10x128 -> 5x5x128
+            nn.BatchNorm2d(128),
+
+            # block 4
+            nn.Conv2d(128, 256, kernel_size=5), # 5x5x128 -> 1x1x256
+            nn.LeakyReLU(),
+            nn.BatchNorm2d(256),
+            nn.Flatten(),
+            nn.Linear(256, latent_dim*2), # 1x1x256 -> 1x1x512
+            # nn.Sigmoid()
+        )
+
+        self.mu = nn.Linear(latent_dim*2, latent_dim)
+        self.logvar = nn.Linear(latent_dim*2, latent_dim)
+
+        # decoder with upsampling and batch normalization turn to 68x68x3 in 4 blocks
+        self.decoder = nn.Sequential(
+            # block 1
+            nn.Unflatten(1, (latent_dim, 1, 1)),
+            nn.ConvTranspose2d(latent_dim, 128, kernel_size=5), # 1x1x256 -> 5x5x128
+            nn.LeakyReLU(),
+            nn.BatchNorm2d(128),
+            nn.Upsample(scale_factor=2), # 5x5x128 -> 10x10x128
+
+            # block 2
+            nn.ConvTranspose2d(128, 64, kernel_size=5), # 10x10x128 -> 14x14x64
+            nn.LeakyReLU(),
+            nn.BatchNorm2d(64),
+            nn.Upsample(scale_factor=2), # 14x14x64 -> 28x28x64
+
+            # block 3
+            nn.ConvTranspose2d(64, 32, kernel_size=5), # 28x28x64 -> 32x32x32
+            nn.LeakyReLU(),
+            nn.BatchNorm2d(32),
+            nn.Upsample(scale_factor=2), # 32x32x32 -> 64x64x32
+            
+            # block 4
+            nn.ConvTranspose2d(32, 3, kernel_size=5), # 64x64x32 -> 68x68x3
+            # nn.BatchNorm2d(3),
+            nn.Sigmoid()
+            
+        )        
+
 
 
 
@@ -342,6 +395,4 @@ class VAE_CELL_CNN_CLASSIFIER(nn.Module):
         encoded = self.encoder(x)
         class_logits = self.classifier(encoded)
         return class_logits
-
-
 
