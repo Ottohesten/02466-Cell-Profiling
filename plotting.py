@@ -87,8 +87,9 @@ def plot_latent(output):
 
     scale_factor = 2.0
 
-    # if z.shape[1] > 2:
-    #     z = TSNE(n_components=2).fit_transform(z)
+    if z.shape[1] > 2:
+        # use t-sne to reduce of the latent space to 2 dimensions
+        z = TSNE(n_components=2).fit_transform(z)
     
     plt.figure(figsize=(8, 6))
     plt.scatter(z[:, 0], z[:, 1], c="g", label="z")
