@@ -268,7 +268,7 @@ class CELL_CNN_CLASSIFIER(nn.Module):
 
 class VAE_LAFARGE(VAE):
     def __init__(self,input_dim, hidden_dim, latent_dim=256):
-        super().__init__()
+        super().__init__(input_dim, hidden_dim, latent_dim)
         
         # encoder with max pooling and batch normalization
         self.encoder = nn.Sequential(
