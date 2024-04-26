@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA
+import umap
 import torch
 
 
@@ -80,7 +82,7 @@ def plot_image_comparison(model, test_loader, cuda, img_shape=(28, 28)):
 
 
 
-def plot_latent(output):
+def plot_latent(output, reduction_method="tsne"):
     mu = output["mu"].detach().cpu().numpy()
     sigma = output["sigma"].detach().cpu().numpy()
     z = output["z"].detach().cpu().numpy()
@@ -88,8 +90,20 @@ def plot_latent(output):
     scale_factor = 2.0
 
     if z.shape[1] > 2:
-        # use t-sne to reduce of the latent space to 2 dimensions
-        z = TSNE(n_components=2).fit_transform(z)
+        if reduction_method == "tsne":
+            # use t-sne to reduce of the latent space to 2 dimensions
+            z = TSNE(n_components=2).fit_transform(z)
+            mu = TSNE(n_components=2).fit_transform(mu)
+        elif reduction_method == "umap":
+            z = umap.UMAP(n_components=2).fit_transform(z)
+            mu = umap.UMAP(n_components=2).fit_transform(mu)
+        elif reduction_method == "pca":
+            z = PCA(n_components=2).fit_transform(z)
+            mu = PCA(n_components=2).fit_transform(mu)
+        else:
+            raise ValueError("reduction_method must be one of 'tsne', 'umap', 'pca'")
+
+
     
     plt.figure(figsize=(8, 6))
     plt.scatter(z[:, 0], z[:, 1], c="g", label="z")
