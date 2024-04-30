@@ -1,7 +1,5 @@
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
-from sklearn.decomposition import PCA
-import umap
 import torch
 
 
@@ -95,15 +93,17 @@ def plot_latent(output, reduction_method="tsne"):
             z = TSNE(n_components=2).fit_transform(z)
             mu = TSNE(n_components=2).fit_transform(mu)
         elif reduction_method == "umap":
+            import umap
             z = umap.UMAP(n_components=2).fit_transform(z)
             mu = umap.UMAP(n_components=2).fit_transform(mu)
         elif reduction_method == "pca":
+            from sklearn.decomposition import PCA
             z = PCA(n_components=2).fit_transform(z)
             mu = PCA(n_components=2).fit_transform(mu)
         else:
             raise ValueError("reduction_method must be one of 'tsne', 'umap', 'pca'")
 
-
+    
     
     plt.figure(figsize=(8, 6))
     plt.scatter(z[:, 0], z[:, 1], c="g", label="z")
