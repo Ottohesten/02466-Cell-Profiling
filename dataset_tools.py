@@ -2,6 +2,7 @@ from torch.utils.data import DataLoader, Dataset # importing packages
 from torchvision import datasets
 import torch
 import numpy as np
+from sklearn.model_selection import train_test_split
 
 
 class MNIST(Dataset):
@@ -50,10 +51,10 @@ class OwnDataset(Dataset):
         else:
             self.dataset = datasets.DatasetFolder(path, loader=npy_loader, extensions=('.npy',))
     
-        if train:
-            self.dataset.samples = self.dataset.samples[:int(0.8*len(self.dataset))]
-        else:
-            self.dataset.samples = self.dataset.samples[int(0.8*len(self.dataset)):]
+        # if train:
+        #     self.dataset.samples = self.dataset.samples[:int(0.8*len(self.dataset))]
+        # else:
+            # self.dataset.samples = self.dataset.samples[int(0.8*len(self.dataset)):]
 
     def __len__(self):
         return len(self.dataset)
@@ -62,6 +63,16 @@ class OwnDataset(Dataset):
         img, label = self.dataset[idx] # TODO: label seems to be coming out of thin air. the correct label is in metadata file | label comes from datasetFolder find_classes method, i think this is the wrong way to get the dataset
         return img, label
     
+
+def make_train_test_val_split(dataset: OwnDataset):
+    train_idx, test_idx = train_test_split(range(len(dataset)), test_size=0.2)
+    train_idx, val_idx = train_test_split(train_idx, test_size=0.2)
+    
+    train_dataset = torch.utils.data.Subset(dataset, train_idx)
+    test_dataset = torch.utils.data.Subset(dataset, test_idx)
+    val_dataset = torch.utils.data.Subset(dataset, val_idx)
+    
+    return train_dataset, test_dataset, val_dataset
 
 
 if __name__ == "__main__":
