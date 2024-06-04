@@ -24,6 +24,23 @@ def loss_plots(plot_data: dict, invidual_plots: bool = False):
             plt.plot(value, label=key)
         plt.legend()
         plt.show()
+
+def accuracy_plots(plot_data: dict, invidual_plots: bool = False):
+    """
+    Plots the accuracy from the dictionary
+    """
+    if invidual_plots:
+        for key, value in plot_data.items():
+            plt.plot(value, label=key)
+            plt.title(key)
+            plt.grid()
+            plt.show()
+
+    else:
+        for key, value in plot_data.items():
+            plt.plot(value, label=key)
+        plt.legend()
+        plt.show()
     
 
 def plot_random_images(model, n=10, cuda=False, img_shape=(28, 28)):
