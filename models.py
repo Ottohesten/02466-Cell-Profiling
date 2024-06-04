@@ -266,6 +266,54 @@ class CELL_CNN_CLASSIFIER(nn.Module):
     def forward(self, x):
         return self.net(x)
 
+# cnn classifier with 3 blocks of convolutions
+class CELL_CNN_CLASSIFIER_2(nn.Module):
+    def __init__(self, input_dim, hidden_dim, num_classes):
+        super().__init__()
+
+        self.net = nn.Sequential(
+            # block 1
+            nn.Conv2d(3, 32, kernel_size=5), # 68x68x3 -> 64x64x32
+            nn.LeakyReLU(),
+            nn.MaxPool2d(2), # 64x64x32 -> 32x32x32
+            nn.BatchNorm2d(32),
+
+            # block 2
+            nn.Conv2d(32, 64, kernel_size=5), # 32x32x32 -> 28x28x64
+            nn.LeakyReLU(),
+            nn.MaxPool2d(2), # 28x28x64 -> 14x14x64
+            nn.BatchNorm2d(64),
+
+            # block 3
+            nn.Conv2d(64, 128, kernel_size=5), # 14x14x64 -> 10x10x128
+            nn.LeakyReLU(),
+            nn.MaxPool2d(2), # 10x10x128 -> 5x5x128
+            nn.BatchNorm2d(128),
+
+            nn.Flatten(),
+            nn.Linear(128*5*5, hidden_dim),
+            nn.LeakyReLU(),
+            nn.Linear(hidden_dim, num_classes)
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
+
+# latent space classifier
+class LatentClassifier(nn.Module):
+    def __init__(self, latent_dim, hidden_dim, num_classes):
+        super().__init__()
+
+        self.net = nn.Sequential(
+            nn.Linear(latent_dim, hidden_dim),
+            nn.LeakyReLU(),
+            nn.Linear(hidden_dim, num_classes)
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
 class VAE_LAFARGE(VAE):
     def __init__(self,input_dim, hidden_dim, latent_dim=256):
         super().__init__(input_dim, hidden_dim, latent_dim)
