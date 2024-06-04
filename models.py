@@ -57,17 +57,17 @@ class VAE(nn.Module):
 
 
         self.encoder = None
-        self.mu = None
-        self.logvar = None
+        # self.mu = None
+        # self.logvar = None
         self.decoder = None
 
     def check_architecture(self):
         if self.encoder is None:
             raise NotImplementedError("Encoder not implemented")
-        if self.mu is None:
-            raise NotImplementedError("Mu not implemented")
-        if self.logvar is None:
-            raise NotImplementedError("logvar not implemented")
+        # if self.mu is None:
+        #     raise NotImplementedError("Mu not implemented")
+        # if self.logvar is None:
+        #     raise NotImplementedError("logvar not implemented")
         if self.decoder is None:
             raise NotImplementedError("Decoder not implemented")
 
@@ -75,8 +75,7 @@ class VAE(nn.Module):
     def encode(self, x): # posterior
         # q(z|x)
         h = self.encoder(x) # hidden
-        mu = self.mu(h) # mean
-        logvar = self.logvar(h) # log variance
+        mu, logvar = torch.chunk(h, 2, dim=1) # split the hidden layer into two parts
         return mu, logvar # mean and log variance
     
     def decode(self, z):
