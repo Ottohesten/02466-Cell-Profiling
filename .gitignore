@@ -165,3 +165,4 @@ data/
 processed_data/
 
 *CPfeatures*
+*.png
