@@ -50,7 +50,8 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=1e-4)
 
     # training loop
-    num_epochs = 100
+    print("Starting training")
+    num_epochs = 2
 
     train_loss = []
     train_mse_loss = []
