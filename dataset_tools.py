@@ -65,8 +65,10 @@ class OwnDataset(Dataset):
     
 
 def make_train_test_val_split(dataset: OwnDataset):
-    train_idx, test_idx = train_test_split(range(len(dataset)), test_size=0.2, stratify=dataset.dataset.targets)
-    train_idx, val_idx = train_test_split(train_idx, test_size=0.2, stratify=[dataset.dataset.targets[i] for i in train_idx])
+    train_idx, test_idx = train_test_split(range(len(dataset)), test_size=0.2)
+    train_idx, val_idx = train_test_split(train_idx, test_size=0.2)
+    # train_idx, test_idx = train_test_split(range(len(dataset)), test_size=0.2, stratify=dataset.dataset.targets)
+    # train_idx, val_idx = train_test_split(train_idx, test_size=0.2, stratify=[dataset.dataset.targets[i] for i in train_idx])
     
     train_dataset = torch.utils.data.Subset(dataset, train_idx)
     test_dataset = torch.utils.data.Subset(dataset, test_idx)
