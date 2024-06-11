@@ -26,8 +26,8 @@ def main():
         # transforms.Lambda(lambda x: x.view(-1)) # notice that we dont flatten when we are going to use CNN
     ])
 
-    # dataset = OwnDataset(transform=tf, path=r"C:\Users\Otto\Desktop\Fagprojekt_data\labelled_data")
-    dataset = OwnDataset(transform=tf)
+    dataset = OwnDataset(transform=tf, path="/work3/s194101/labelled_data/")
+    # dataset = OwnDataset(transform=tf)
 
     batch_size = 64
     train_subset, test_subset, val_subset = make_train_test_val_split(dataset)
