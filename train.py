@@ -56,7 +56,7 @@ def main():
 
     # training loop
     print("Starting training")
-    num_epochs = 2
+    num_epochs = 100
 
     train_loss = []
     train_mse_loss = []
