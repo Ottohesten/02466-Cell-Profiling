@@ -38,9 +38,10 @@ def main():
 
 
     # load the model
-    from models import VAE_LAFARGE
+    from models import VAE_LAFARGE, VAE_CELL_CNN
     from loss_functions import loss_function
-    model = VAE_LAFARGE(input_dim=(3,68,68), hidden_dim=512, latent_dim=256)
+    # model = VAE_LAFARGE(input_dim=(3,68,68), hidden_dim=512, latent_dim=256)
+    model = VAE_CELL_CNN(input_dim=(3,68,68), hidden_dim=512, latent_dim=256)
 
     if cuda:
         model.cuda()
@@ -49,14 +50,16 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=1e-4)
 
     # define dirs for the saving of model / data
-    MODEL_NAME = f"{model.__class__.__name__}_latent{model.latent_dim}_"
+    BETA = 0
+    MODEL_NAME = f"{model.__class__.__name__}_latent{model.latent_dim}_b{BETA}"
     MODEL_DIR = "trained_models/"
     TRAIN_DATA_DIR = "train_data/"
+    
 
 
     # training loop
     print("Starting training")
-    num_epochs = 100
+    num_epochs = 50
 
     train_loss = []
     train_mse_loss = []
@@ -79,7 +82,7 @@ def main():
             optimizer.zero_grad()
             output = model(x)
             x_hat, mu, sigma = output["x_hat"], output["mu"], output["sigma"]
-            loss_fn = loss_function(x, x_hat, mu, sigma)
+            loss_fn = loss_function(x, x_hat, mu, sigma, beta=BETA)
             mse_loss = loss_fn["MSE"]
             kld_loss = loss_fn["KLD"]
             loss = loss_fn["loss"]
@@ -106,7 +109,7 @@ def main():
 
                 output_val = model(x)
                 x_hat, mu, sigma = output_val["x_hat"], output_val["mu"], output_val["sigma"]
-                loss_fn = loss_function(x, x_hat, mu, sigma)
+                loss_fn = loss_function(x, x_hat, mu, sigma, beta=BETA)
                 loss = loss_fn["loss"]
                 mse_loss = loss_fn["MSE"]
                 kld_loss = loss_fn["KLD"]
@@ -139,7 +142,7 @@ def main():
 
         output_test = model(x)
         x_hat, mu, sigma = output_test["x_hat"], output_test["mu"], output_test["sigma"]
-        loss_fn = loss_function(x, x_hat, mu, sigma)
+        loss_fn = loss_function(x, x_hat, mu, sigma, beta=BETA)
         mse_loss = loss_fn["MSE"]
         kld_loss = loss_fn["KLD"]
         loss = loss_fn["loss"]
