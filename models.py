@@ -4,8 +4,9 @@ from torch import nn
 
 # Autoencoder model architecture
 class AutoEncoder(nn.Module):
-    def __init__(self, latent_features=3):
+    def __init__(self, latent_dim=3):
         super(AutoEncoder, self).__init__()
+        self.latent_dim = latent_dim
 
         self.encoder = nn.Sequential(
             nn.Linear(28*28, 256),
@@ -17,11 +18,11 @@ class AutoEncoder(nn.Module):
             nn.LeakyReLU(),
             nn.Linear(64, 12),
             nn.LeakyReLU(),
-            nn.Linear(12, latent_features)
+            nn.Linear(12, latent_dim)
         )
 
         self.decoder = nn.Sequential(
-            nn.Linear(latent_features, 12),
+            nn.Linear(latent_dim, 12),
             nn.LeakyReLU(),
             nn.Dropout(0.2),
             nn.Linear(12, 64),
@@ -38,6 +39,75 @@ class AutoEncoder(nn.Module):
         x = self.encoder(x)
         x = self.decoder(x)
         return x
+
+
+class CELL_CNN_AutoEncoder(nn.Module):
+    """
+    Convolutional Autoencoder for the CELL dataset
+    """
+    def __init__(self, latent_dim=256):
+        super().__init__()
+        self.latent_dim = latent_dim
+
+        self.encoder = nn.Sequential(
+            # block 1
+            nn.Conv2d(3, 32, kernel_size=5), # 68x68x3 -> 64x64x32
+            nn.LeakyReLU(),
+            nn.MaxPool2d(2), # 64x64x32 -> 32x32x32
+            nn.BatchNorm2d(32),
+
+            # block 2
+            nn.Conv2d(32, 64, kernel_size=5), # 32x32x32 -> 28x28x64
+            nn.LeakyReLU(),
+            nn.MaxPool2d(2), # 28x28x64 -> 14x14x64
+            nn.BatchNorm2d(64),
+
+            # block 3
+            nn.Conv2d(64, 128, kernel_size=5), # 14x14x64 -> 10x10x128
+            nn.LeakyReLU(),
+            nn.MaxPool2d(2), # 10x10x128 -> 5x5x128
+            nn.BatchNorm2d(128),
+
+            # block 4
+            nn.Conv2d(128, 256, kernel_size=5), # 5x5x128 -> 1x1x256
+            nn.LeakyReLU(),
+            nn.BatchNorm2d(256),
+            nn.Flatten(),
+            nn.Linear(256, latent_dim)
+        )
+
+        # decoder
+        self.decoder = nn.Sequential(
+            nn.Linear(latent_dim, 256),
+            nn.LeakyReLU(),
+            nn.Unflatten(1, (256, 1, 1)),
+            nn.ConvTranspose2d(256, 128, kernel_size=5), # 1x1x256 -> 5x5x128
+            nn.LeakyReLU(),
+            nn.BatchNorm2d(128),
+            nn.Upsample(scale_factor=2), # 5x5x128 -> 10x10x128
+
+            nn.ConvTranspose2d(128, 64, kernel_size=5), # 10x10x128 -> 14x14x64
+            nn.LeakyReLU(),
+            nn.BatchNorm2d(64),
+            nn.Upsample(scale_factor=2), # 14x14x64 -> 28x28x64
+
+            nn.ConvTranspose2d(64, 32, kernel_size=5), # 28x28x64 -> 32x32x32
+            nn.LeakyReLU(),
+            nn.BatchNorm2d(32),
+            nn.Upsample(scale_factor=2), # 32x32x32 -> 64x64x32
+            
+            nn.ConvTranspose2d(32, 3, kernel_size=5), # 64x64x32 -> 68x68x3
+            nn.BatchNorm2d(3),
+            nn.Sigmoid()
+        )
+
+
+    def forward(self, x):
+        x = self.encoder(x)
+        x = self.decoder(x)
+        return x
+
+
 
 
 

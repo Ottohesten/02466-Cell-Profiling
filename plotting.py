@@ -1,6 +1,13 @@
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 import torch
+from inference import Inference
+from sklearn.preprocessing import StandardScaler
+import numpy as np
+import plotly.express as px
+import pandas as pd
+
+FIGURE_DIR = "figures/"
 
 
 def show_img(img):
@@ -8,7 +15,7 @@ def show_img(img):
     plt.show()
 
 
-def loss_plots(plot_data: dict, invidual_plots: bool = False):
+def loss_plots(plot_data: dict, title: str = None, invidual_plots: bool = False):
     """
     Plots the losses from the dictionary
     """
@@ -23,6 +30,8 @@ def loss_plots(plot_data: dict, invidual_plots: bool = False):
         for key, value in plot_data.items():
             plt.plot(value, label=key)
         plt.legend()
+        if title:
+            plt.title(title)
         plt.show()
 
 def accuracy_plots(plot_data: dict, invidual_plots: bool = False):
@@ -97,7 +106,7 @@ def plot_image_comparison(model, test_loader, cuda, img_shape=(28, 28)):
 
 
 
-def plot_latent(output, reduction_method="tsne"):
+def plot_latent_train(output, reduction_method="tsne"):
     mu = output["mu"].detach().cpu().numpy()
     sigma = output["sigma"].detach().cpu().numpy()
     z = output["z"].detach().cpu().numpy()
@@ -123,7 +132,6 @@ def plot_latent(output, reduction_method="tsne"):
     
     
     plt.figure(figsize=(8, 6))
-    plt.scatter(z[:, 0], z[:, 1], c="g", label="z")
     plt.scatter(mu[:, 0], mu[:, 1], c="r", label="mu")
 
 
@@ -138,3 +146,65 @@ def plot_latent(output, reduction_method="tsne"):
     plt.legend()
     plt.show()
 
+
+def plot_latent(inference: Inference, method="tsne", keys=[str(i) for i in range(13)]):
+    samples = inference.samples
+    scaler = StandardScaler()
+
+    for key, val in samples.items():
+        if key not in keys:
+            continue
+        mu = val["mu"]
+        mu_scaled = scaler.fit_transform(mu)
+
+        if method == "tsne":
+            tsne = TSNE(n_components=2)
+            z = tsne.fit_transform(mu_scaled)
+        else:
+            from sklearn.decomposition import PCA
+            pca = PCA(n_components=2)
+            z = pca.fit_transform(mu_scaled)
+        
+        plt.scatter(z[:,0], z[:,1], label=key)
+    plt.legend()
+    plt.show()
+
+
+def plot_split_stratification(dataset, train_subset, test_subset, val_subset):
+    """
+    Plot the stratification of the dataset
+    """
+    # check if the split is stratified
+    # make the 4 plots side by side
+    plt.figure(figsize=(24,6))
+    plt.subplot(1,4,1)
+    plt.title("Whole dataset")
+    targets = np.array(dataset.dataset.targets)
+    unique, counts = np.unique(targets, return_counts=True)
+    plt.bar(unique, counts/len(dataset))
+    plt.subplot(1,4,2)
+    plt.title("Train dataset")
+    train_targets = np.array(train_subset.dataset.dataset.targets)[train_subset.indices]
+    train_unique, train_counts =  np.unique(train_targets, return_counts=True)
+    plt.bar(train_unique, train_counts/len(train_subset))
+    plt.subplot(1,4,3)
+    plt.title("Test dataset")
+    test_targets = np.array(test_subset.dataset.dataset.targets)[test_subset.indices]
+    test_unique, test_counts =  np.unique(test_targets, return_counts=True)
+    plt.bar(test_unique, test_counts/len(test_subset))
+    plt.subplot(1,4,4)
+    plt.title("Val dataset")
+    val_targets = np.array(val_subset.dataset.dataset.targets)[val_subset.indices]
+    val_unique, val_counts =  np.unique(val_targets, return_counts=True)
+    plt.bar(val_unique, val_counts/len(val_subset))
+    plt.show()
+
+    # combine in the same plot using plotly express
+    df = pd.DataFrame({
+        "Dataset": ["Whole"]*len(unique) + ["Train"]*len(train_unique) + ["Test"]*len(test_unique) + ["Val"]*len(val_unique),
+        "Class": np.concatenate([unique, train_unique, test_unique, val_unique]),
+        "Percentage": np.concatenate([counts/len(dataset), train_counts/len(train_subset), test_counts/len(test_subset), val_counts/len(val_subset)])
+    })
+
+    fig = px.bar(df, x="Class", y="Percentage", color="Dataset", barmode="group")
+    fig.show()
