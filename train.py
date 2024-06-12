@@ -26,8 +26,8 @@ def main():
         # transforms.Lambda(lambda x: x.view(-1)) # notice that we dont flatten when we are going to use CNN
     ])
 
-    # dataset = OwnDataset(transform=tf, path=r"C:\Users\Otto\Desktop\Fagprojekt_data\labelled_data")
-    dataset = OwnDataset(transform=tf)
+    dataset = OwnDataset(transform=tf, path="/work3/s194101/labelled_data/")
+    # dataset = OwnDataset(transform=tf)
 
     batch_size = 64
     train_subset, test_subset, val_subset = make_train_test_val_split(dataset)
@@ -40,7 +40,6 @@ def main():
     # load the model
     from models import VAE_LAFARGE
     from loss_functions import loss_function
-
     model = VAE_LAFARGE(input_dim=(3,68,68), hidden_dim=512, latent_dim=256)
 
     if cuda:
@@ -49,9 +48,15 @@ def main():
     lr = 1e-3
     optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=1e-4)
 
+    # define dirs for the saving of model / data
+    MODEL_NAME = f"{model.__class__.__name__}_latent{model.latent_dim}_"
+    MODEL_DIR = "trained_models/"
+    TRAIN_DATA_DIR = "train_data/"
+
+
     # training loop
     print("Starting training")
-    num_epochs = 2
+    num_epochs = 100
 
     train_loss = []
     train_mse_loss = []
@@ -116,10 +121,34 @@ def main():
 
             if val_loss[-1] < best_loss:
                 best_loss = val_loss[-1]
-                torch.save(model.state_dict(), f"{model.__class__.__name__}_hpc_best_model.pth")
+                torch.save(model.state_dict(), MODEL_DIR + MODEL_NAME + "hpc_best_model.pth")
 
         # print(f"Epoch {epoch+1}/{num_epochs}, loss: {train_loss[-1]}")
         print(f"Epoch {epoch+1}/{num_epochs}, loss: {train_loss[-1]}, mse_loss: {train_mse_loss[-1]}, kld_loss: {train_kld_loss[-1]}, val_loss: {val_loss[-1]}, val_mse_loss: {val_mse_loss[-1]}, val_kld_loss: {val_kld_loss[-1]}")
+
+    # test the model
+    # we evaluate model on test set
+    test_loss = []
+    test_mse_loss = []
+    test_kld_loss = []
+    model.eval()
+
+    for x, y in test_loader:
+        if cuda:
+            x = x.cuda()
+
+        output_test = model(x)
+        x_hat, mu, sigma = output_test["x_hat"], output_test["mu"], output_test["sigma"]
+        loss_fn = loss_function(x, x_hat, mu, sigma)
+        mse_loss = loss_fn["MSE"]
+        kld_loss = loss_fn["KLD"]
+        loss = loss_fn["loss"]
+
+        test_loss.append(loss.item())
+        test_mse_loss.append(mse_loss.item())
+        test_kld_loss.append(kld_loss.item())
+
+    print(f"Test loss: {np.mean(test_loss)}, Test mse loss: {np.mean(test_mse_loss)}, Test kld loss: {np.mean(test_kld_loss)}")
 
     # save the data
     # make a dictionary with the losses as keys and the values as lists
@@ -130,14 +159,17 @@ def main():
     loss_data["val_loss"] = val_loss
     loss_data["val_mse_loss"] = val_mse_loss
     loss_data["val_kld_loss"] = val_kld_loss
+    loss_data["test_loss"] = np.mean(test_loss)
+    loss_data["test_mse_loss"] = np.mean(test_mse_loss)
+    loss_data["test_kld_loss"] = np.mean(test_kld_loss)
 
     df = pd.DataFrame(loss_data)
     try:
-        old_df = pd.read_csv(f"{model.__class__.__name__}_loss_data.csv")
+        old_df = pd.read_csv(TRAIN_DATA_DIR + MODEL_NAME + "loss_data.csv")
         df = pd.concat([old_df, df])
     except:
         pass
-    df.to_csv(f"{model.__class__.__name__}_hpc_loss_data.csv", index=False)
+    df.to_csv(TRAIN_DATA_DIR + MODEL_NAME + "loss_data.csv", index=False)
 
 
 
