@@ -29,7 +29,7 @@ def main():
     dataset = OwnDataset(transform=tf, path="/work3/s194101/labelled_data/")
     # dataset = OwnDataset(transform=tf)
 
-    batch_size = 64
+    batch_size = 96
     train_subset, test_subset, val_subset = make_train_test_val_split(dataset)
 
     train_loader = DataLoader(train_subset, batch_size=batch_size, shuffle=True, pin_memory=cuda, drop_last=True)
@@ -39,19 +39,20 @@ def main():
 
     # load the model
     from models import VAE_LAFARGE, VAE_CELL_CNN
-    from loss_functions import loss_function
+    from loss_functions import loss_function_mean as loss_function
     # model = VAE_LAFARGE(input_dim=(3,68,68), hidden_dim=512, latent_dim=256)
     model = VAE_CELL_CNN(input_dim=(3,68,68), hidden_dim=512, latent_dim=256)
 
     if cuda:
         model.cuda()
 
-    lr = 1e-3
+    lr = 5e-4
     optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=1e-4)
 
     # define dirs for the saving of model / data
-    BETA = 0
-    MODEL_NAME = f"{model.__class__.__name__}_latent{model.latent_dim}_b{BETA}"
+    BETA = 1
+    MODEL_NAME = f"{model.__class__.__name__}_latent{model.latent_dim}_b{BETA}_mean_"
+    # MODEL_NAME = f"{model.__class__.__name__}_latent{model.latent_dim}_mean_"
     MODEL_DIR = "trained_models/"
     TRAIN_DATA_DIR = "train_data/"
     
@@ -103,28 +104,30 @@ def main():
             batch_loss = []
             batch_mse_loss = []
             batch_kld_loss = []
-            for x, y in val_loader:
-                if cuda:
-                    x = x.cuda()
 
-                output_val = model(x)
-                x_hat, mu, sigma = output_val["x_hat"], output_val["mu"], output_val["sigma"]
-                loss_fn = loss_function(x, x_hat, mu, sigma, beta=BETA)
-                loss = loss_fn["loss"]
-                mse_loss = loss_fn["MSE"]
-                kld_loss = loss_fn["KLD"]
+            with torch.no_grad():
+                for x, y in val_loader:
+                    if cuda:
+                        x = x.cuda()
 
-                batch_loss.append(loss.item())
-                batch_mse_loss.append(mse_loss.item())
-                batch_kld_loss.append(kld_loss.item())
+                    output_val = model(x)
+                    x_hat, mu, sigma = output_val["x_hat"], output_val["mu"], output_val["sigma"]
+                    loss_fn = loss_function(x, x_hat, mu, sigma, beta=BETA)
+                    loss = loss_fn["loss"]
+                    mse_loss = loss_fn["MSE"]
+                    kld_loss = loss_fn["KLD"]
 
-            val_loss.append(np.mean(batch_loss))
-            val_mse_loss.append(np.mean(batch_mse_loss))
-            val_kld_loss.append(np.mean(batch_kld_loss))
+                    batch_loss.append(loss.item())
+                    batch_mse_loss.append(mse_loss.item())
+                    batch_kld_loss.append(kld_loss.item())
 
-            if val_loss[-1] < best_loss:
-                best_loss = val_loss[-1]
-                torch.save(model.state_dict(), MODEL_DIR + MODEL_NAME + "hpc_best_model.pth")
+                val_loss.append(np.mean(batch_loss))
+                val_mse_loss.append(np.mean(batch_mse_loss))
+                val_kld_loss.append(np.mean(batch_kld_loss))
+
+                if val_loss[-1] < best_loss:
+                    best_loss = val_loss[-1]
+                    torch.save(model.state_dict(), MODEL_DIR + MODEL_NAME + "hpc_best_model.pth")
 
         # print(f"Epoch {epoch+1}/{num_epochs}, loss: {train_loss[-1]}")
         print(f"Epoch {epoch+1}/{num_epochs}, loss: {train_loss[-1]}, mse_loss: {train_mse_loss[-1]}, kld_loss: {train_kld_loss[-1]}, val_loss: {val_loss[-1]}, val_mse_loss: {val_mse_loss[-1]}, val_kld_loss: {val_kld_loss[-1]}")
@@ -136,22 +139,23 @@ def main():
     test_kld_loss = []
     model.eval()
 
-    for x, y in test_loader:
-        if cuda:
-            x = x.cuda()
+    with torch.no_grad():
+        for x, y in test_loader:
+            if cuda:
+                x = x.cuda()
 
-        output_test = model(x)
-        x_hat, mu, sigma = output_test["x_hat"], output_test["mu"], output_test["sigma"]
-        loss_fn = loss_function(x, x_hat, mu, sigma, beta=BETA)
-        mse_loss = loss_fn["MSE"]
-        kld_loss = loss_fn["KLD"]
-        loss = loss_fn["loss"]
+            output_test = model(x)
+            x_hat, mu, sigma = output_test["x_hat"], output_test["mu"], output_test["sigma"]
+            loss_fn = loss_function(x, x_hat, mu, sigma, beta=BETA)
+            mse_loss = loss_fn["MSE"]
+            kld_loss = loss_fn["KLD"]
+            loss = loss_fn["loss"]
 
-        test_loss.append(loss.item())
-        test_mse_loss.append(mse_loss.item())
-        test_kld_loss.append(kld_loss.item())
+            test_loss.append(loss.item())
+            test_mse_loss.append(mse_loss.item())
+            test_kld_loss.append(kld_loss.item())
 
-    print(f"Test loss: {np.mean(test_loss)}, Test mse loss: {np.mean(test_mse_loss)}, Test kld loss: {np.mean(test_kld_loss)}")
+        print(f"Test loss: {np.mean(test_loss)}, Test mse loss: {np.mean(test_mse_loss)}, Test kld loss: {np.mean(test_kld_loss)}")
 
     # save the data
     # make a dictionary with the losses as keys and the values as lists
