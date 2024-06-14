@@ -153,12 +153,12 @@ class VAE(nn.Module):
         return self.decoder(z)
 
     def reparameterize(self, mu, logvar):
-        if self.training:
-            std = torch.exp(0.5*logvar)
-            eps = torch.randn_like(std)
-            return mu + eps*std
-        else:
-            return mu
+        # if self.training:
+        std = torch.exp(0.5*logvar)
+        eps = torch.randn_like(std)
+        return mu + eps*std
+        # else:
+        #     return mu
 
     def forward(self, x):
         mu, logvar = self.encode(x) 
