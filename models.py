@@ -427,6 +427,8 @@ class CELL_CNN_CLASSIFIER_2(nn.Module):
 class LatentClassifier(nn.Module):
     def __init__(self, latent_dim, hidden_dim, num_classes):
         super().__init__()
+        self.hidden_dim = hidden_dim
+        self.latent_dim = latent_dim
 
         self.net = nn.Sequential(
             nn.Linear(latent_dim, hidden_dim),
@@ -436,6 +438,30 @@ class LatentClassifier(nn.Module):
 
     def forward(self, x):
         return self.net(x)
+    
+
+class LatentClassifier_2(nn.Module):
+    """
+    Classify latent sample with dimensions 2
+    """
+    def __init__(self, latent_dim, hidden_dim, num_classes):
+        super().__init__()
+        self.hidden_dim = hidden_dim
+        self.latent_dim = latent_dim
+
+        self.net = nn.Sequential(
+            nn.Linear(latent_dim, hidden_dim),
+            nn.LeakyReLU(),
+            nn.Linear(hidden_dim, 32),
+            nn.LeakyReLU(),
+            nn.Linear(32, 64),
+            nn.LeakyReLU(),
+            nn.Linear(64, num_classes)
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
 
 class VAE_LAFARGE(VAE):
     def __init__(self,input_dim, hidden_dim, latent_dim=256):
