@@ -154,9 +154,9 @@ class VAE(nn.Module):
 
     def reparameterize(self, mu, logvar):
         # if self.training:
-        std = torch.exp(0.5*logvar)
-        eps = torch.randn_like(std)
-        return mu + eps*std
+        std = torch.exp(0.5*logvar)     # Compute sigma from log(sigma^2)/logvar.
+        eps = torch.randn_like(std)     # Sample epsilon from a standard normal distribution.
+        return mu + eps*std             # Reparameterization trick.
         # else:
         #     return mu
 
@@ -575,7 +575,7 @@ class VAE_CELL_CNN_CLASSIFIER(nn.Module):
         self.classifier = nn.Linear(hidden_dim, num_classes)
 
     def reparameterize(self, mu, log_var):
-        std = torch.exp(0.5*log_var)        # Compute sigma from log(sigma^2).
+        std = torch.exp(0.5*log_var)        # Compute sigma from log(sigma^2)/log_var.
         eps = torch.randn_like(std)         # Sample epsilon from a standard normal distribution.
         return mu + eps*std                 # Reparameterization trick.
 
