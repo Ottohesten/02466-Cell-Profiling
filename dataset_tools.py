@@ -77,6 +77,13 @@ def make_train_test_val_split(dataset: OwnDataset):
     return train_dataset, test_dataset, val_dataset
 
 
+
+def make_small_subset(dataset: OwnDataset, n=1000):
+    idx = np.random.choice(range(len(dataset)), n, replace=False)
+    subset = torch.utils.data.Subset(dataset, idx)
+    return subset
+
+
 if __name__ == "__main__":
     print("ran dataset_tools.py as main file")
 
