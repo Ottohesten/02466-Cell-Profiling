@@ -527,6 +527,72 @@ class VAE_LAFARGE(VAE):
             
         )        
 
+import torchvision.transforms as transforms
+class VAE_LAFARGE_v2(VAE):
+    def __init__(self, input_dim, hidden_dim, latent_dim=256):
+        super().__init__(input_dim, hidden_dim, latent_dim)
+        
+        # Encoder with max pooling, batch normalization, and dropout for regularization
+        self.encoder = nn.Sequential(
+            # Block 1
+            nn.Conv2d(3, 32, kernel_size=6, stride=1, padding=2, dilation=2),  # 68x68x3 -> 68x68x32
+            nn.LeakyReLU(),
+            nn.MaxPool2d(2),  # 68x68x32 -> 34x34x32
+            nn.BatchNorm2d(32),
+            nn.Dropout(0.1), # Dropout layer to prevent overfitting. Dropout rate of 10%.
+
+            # Block 2
+            nn.Conv2d(32, 64, kernel_size=6, stride=1, padding=2, dilation=2),  # 34x34x32 -> 34x34x64
+            nn.LeakyReLU(),
+            nn.MaxPool2d(2),  # 34x34x64 -> 17x17x64
+            nn.BatchNorm2d(64),
+            nn.Dropout(0.1),
+
+            # Block 3
+            nn.Conv2d(64, 128, kernel_size=6, stride=1, padding=2, dilation=2),  # 17x17x64 -> 17x17x128
+            nn.LeakyReLU(),
+            nn.MaxPool2d(2),  # 17x17x128 -> 8x8x128
+            nn.BatchNorm2d(128),
+            nn.Dropout(0.1),
+
+            # Block 4
+            nn.Conv2d(128, 256, kernel_size=6, stride=1, padding=2, dilation=2),  # 8x8x128 -> 8x8x256
+            nn.LeakyReLU(),
+            nn.BatchNorm2d(256),
+            nn.Flatten(),
+            nn.Linear(8*8*256, latent_dim*2),  # 8x8x256 -> latent_dim*2
+        )
+
+        # Decoder with upsampling, batch normalization, and larger kernel sizes to increase receptive field
+        self.decoder = nn.Sequential(
+            nn.Unflatten(1, (latent_dim, 1, 1)),
+            nn.ConvTranspose2d(latent_dim, 128, kernel_size=5, stride=1, padding=2, dilation=2),  # 1x1x256 -> 5x5x128
+            nn.LeakyReLU(),
+            nn.BatchNorm2d(128),
+            nn.Upsample(scale_factor=2),  # 5x5x128 -> 10x10x128
+            nn.Dropout(0.1),
+
+            nn.ConvTranspose2d(128, 64, kernel_size=6, stride=1, padding=2, dilation=2),  # 10x10x128 -> 14x14x64
+            nn.LeakyReLU(),
+            nn.BatchNorm2d(64),
+            nn.Upsample(scale_factor=2),  # 14x14x64 -> 28x28x64
+            nn.Dropout(0.1),
+
+            nn.ConvTranspose2d(64, 32, kernel_size=6, stride=1, padding=2, dilation=2),  # 28x28x64 -> 32x32x32
+            nn.LeakyReLU(),
+            nn.BatchNorm2d(32),
+            nn.Upsample(scale_factor=2),  # 32x32x32 -> 64x64x32
+            nn.Dropout(0.1),
+            
+            nn.ConvTranspose2d(32, 3, kernel_size=6, stride=1, padding=2, dilation=2),  # 64x64x32 -> 68x68x3
+            nn.Sigmoid()
+        )
+        
+    def transform_image(self, image):
+        # Apply the data transformations specific to VAE_LAFARGE_v2
+        transformed_image = self.data_transforms(image)
+        return transformed_image
+
 
 
 
