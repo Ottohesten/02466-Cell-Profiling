@@ -208,3 +208,19 @@ def plot_split_stratification(dataset, train_subset, test_subset, val_subset):
 
     fig = px.bar(df, x="Class", y="Percentage", color="Dataset", barmode="group")
     fig.show()
+
+
+
+def interpolate_latent(model, z1, z2, num_steps=10):
+    """
+    Interpolates between two latent space vectors
+    """
+    zs = [(1-t) * z1 + t * z2 for t in np.linspace(0, 1, num_steps)]
+
+    with torch.no_grad():
+        model.eval()
+        x_hats = []
+        for z in zs:
+            x_hat = model.decode(z.unsqueeze(0))
+            x_hats.append(x_hat)
+        return x_hats
