@@ -11,6 +11,26 @@ The singlecell folder consists of singh_cp_pipeline_singlecell_images folder and
 ## Breakdown of helper files
 
 **models.py** contains all the files used throughout the project
+
 **plotting.py** contains all the plots used throughout the project
+
 **loss_functions.py** contains all the loss functions used for the different models
+
 **dataset_tools.py** contains helper classes and functions for loading and spliting the data into train, test and val split
+
+## How to train a model
+Main file to train a model is **train.py** In the file there is a line:
+```python
+dataset = OwnDataset(transform=tf, path=r"C:\Users\Otto\Desktop\Fagprojekt_data\labelled_data")
+```
+This is the path to where the dataset is located. If no path is specified it will default to **data_subset**. This folder also showcases the format of how the data file should look
+
+Further down we load the model and loss functions, and specify the latent dimension and hidden dimensions. In our case the hidden dimension is always 2 times the latent dimension
+```python
+from models import VAE_LAFARGE
+from loss_functions import loss_function_mean as loss_function
+model = VAE_LAFARGE(input_dim=(3,68,68), hidden_dim=512, latent_dim=256)
+```
+
+This is all you need to change to trian a different model, however you can also change hyperparameters such as weight decay, learning rate, optimizer etc.
+
