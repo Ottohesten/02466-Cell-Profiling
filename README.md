@@ -55,4 +55,7 @@ Exploratory data analysis is done in **exploratory_analysis.ipynb**
 ### Data analysis of training data and comparison of models
 This is done in **data_analysis.ipynb**
 
+### McNemar test
+Done in **Mcnemar_test.ipynb**
+
 
