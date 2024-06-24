@@ -39,7 +39,7 @@ model = VAE_LAFARGE(input_dim=(3,68,68), hidden_dim=512, latent_dim=256)
 
 This is all you need to change to trian a different model, however you can also change hyperparameters such as weight decay, learning rate, optimizer etc.
 
-## Autoencoder
+### Autoencoder
 THis is done in **autoencoder.ipynb**
 
 ### Latent Classifier
