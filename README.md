@@ -19,6 +19,7 @@ The singlecell folder consists of singh_cp_pipeline_singlecell_images folder and
 **dataset_tools.py** contains helper classes and functions for loading and spliting the data into train, test and val split
 
 ## How to train a model
+### VAE
 Main file to train a model is **train.py** In the file there is a line:
 ```python
 dataset = OwnDataset(transform=tf, path=r"C:\Users\Otto\Desktop\Fagprojekt_data\labelled_data")
@@ -33,4 +34,14 @@ model = VAE_LAFARGE(input_dim=(3,68,68), hidden_dim=512, latent_dim=256)
 ```
 
 This is all you need to change to trian a different model, however you can also change hyperparameters such as weight decay, learning rate, optimizer etc.
+
+### Latent Classifier
+This is done in the **latent_classifier.ipynb** notebook. Same as before the models are loaded from **models.py** and trained on the given data
+
+### Image classifier
+THis is done in **independant_classifier.ipynb**
+
+### KNN classifier
+This is done in **KNN.ipynb**. Note that this requires you to hold the entire dataset in memory, making it not possible to run this fitting on most computers.
+
 
