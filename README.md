@@ -18,6 +18,8 @@ The singlecell folder consists of singh_cp_pipeline_singlecell_images folder and
 
 **dataset_tools.py** contains helper classes and functions for loading and spliting the data into train, test and val split
 
+**inference.py** used in conjunction with plotting to generate samples and plot them
+
 ## How to train a model
 ### VAE
 Main file to train a model is **train.py** In the file there is a line:
