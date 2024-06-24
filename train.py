@@ -26,7 +26,8 @@ def main():
         # transforms.Lambda(lambda x: x.view(-1)) # notice that we dont flatten when we are going to use CNN
     ])
 
-    dataset = OwnDataset(transform=tf, path="/work3/s194101/labelled_data/")
+    # dataset = OwnDataset(transform=tf, path="/work3/s194101/labelled_data/")
+    dataset = OwnDataset(transform=tf, path=r"C:\Users\Otto\Desktop\Fagprojekt_data\labelled_data")
     # dataset = OwnDataset(transform=tf)
 
     batch_size = 96
@@ -40,12 +41,13 @@ def main():
     # load the model
     from models import VAE_LAFARGE, VAE_CELL_CNN
     from loss_functions import loss_function_mean as loss_function
-    # model = VAE_LAFARGE(input_dim=(3,68,68), hidden_dim=512, latent_dim=256)
-    model = VAE_CELL_CNN(input_dim=(3,68,68), hidden_dim=512, latent_dim=256)
+    model = VAE_LAFARGE(input_dim=(3,68,68), hidden_dim=512, latent_dim=256)
+    # model = VAE_CELL_CNN(input_dim=(3,68,68), hidden_dim=512, latent_dim=256)
 
     if cuda:
         model.cuda()
 
+    # lr = 5e-4
     lr = 5e-4
     optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=1e-4)
 
