@@ -44,4 +44,12 @@ THis is done in **independant_classifier.ipynb**
 ### KNN classifier
 This is done in **KNN.ipynb**. Note that this requires you to hold the entire dataset in memory, making it not possible to run this fitting on most computers.
 
+## Data analysis
+
+### Exploratory analysis
+Exploratory data analysis is done in **exploratory_analysis.ipynb**
+
+### Data analysis of training data and comparison of models
+This is done in **data_analysis.ipynb**
+
 
