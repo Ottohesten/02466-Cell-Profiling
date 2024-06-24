@@ -20,6 +20,8 @@ The singlecell folder consists of singh_cp_pipeline_singlecell_images folder and
 
 **inference.py** used in conjunction with plotting to generate samples and plot them
 
+**pre_processing.ipynb** Initial file used for loading in all the dataset, looking up the **metadata.csv** finding the moa and labelling the cells. This is a file only ran once in this project
+
 ## How to train a model
 ### VAE
 Main file to train a model is **train.py** In the file there is a line:
